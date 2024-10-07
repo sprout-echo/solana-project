@@ -20,7 +20,7 @@ const nuxtApp = useNuxtApp();
 const obj = reactive({
   mnemonic: '',
   privateKey: '',
-  address: '', // 即钱包地址
+  address: '7JXKVj3MBNSwL39wPxNiRr1jGnsS8ARtu8fotazFRLeP', // 即钱包地址
 })
 
 const generateM = () => {

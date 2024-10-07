@@ -1,6 +1,17 @@
 import { Buffer } from 'buffer';
-import { PublicKey, Keypair, Transaction, Connection, clusterApiUrl, sendAndConfirmTransaction, TransactionInstruction, SystemProgram, SYSVAR_INSTRUCTIONS_PUBKEY } from '@solana/web3.js';
+import { 
+  PublicKey, 
+  Keypair, 
+  Transaction, 
+  Connection, 
+  clusterApiUrl, 
+  sendAndConfirmTransaction, 
+  TransactionInstruction, 
+  SystemProgram, 
+  SYSVAR_INSTRUCTIONS_PUBKEY } from '@solana/web3.js';
 import bs58 from "bs58";
+import bitcore from 'bitcore-lib-cash';
+const BufferWriter = bitcore.encoding.BufferWriter;
 
 export default function () {
   return {
@@ -43,6 +54,17 @@ export default function () {
               { pubkey: SYSVAR_INSTRUCTIONS_PUBKEY, isSigner: false, isWritable: false },
             ]
           });
+        } else if (item.name === 'addOwners' || item.name === 'removeOwners') {
+          const bufferWriter = new BufferWriter();
+          result = new TransactionInstruction({
+            programId: new PublicKey(payload.address),
+            keys: [
+              { pubkey: new PublicKey(payload.address), isSigner: true, isWritable: true },
+              { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+              { pubkey: SYSVAR_INSTRUCTIONS_PUBKEY, isSigner: false, isWritable: false },
+            ],
+            data: bufferWriter.toBuffer(),
+          })
         }
         instructions.push(result);
       });
@@ -61,6 +83,7 @@ export default function () {
       const transaction = this.buildInstructions(payload);
 
       transaction.feePayer = payload.from;
+      // 提交之前，每个交易需要引用一个recent blockhash（最新块哈希）。 块哈希被用于去重，以及移除过期交易
       transaction.recentBlockhash = blockhash;
       // Sign transaction, broadcast, and confirm
       const txHash = await sendAndConfirmTransaction(
@@ -76,6 +99,16 @@ export default function () {
     async buildBatchTransfer(address, privateKey) {
       const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
       const from = Keypair.fromSecretKey(new Uint8Array(bs58.decode(privateKey)));
+      // 生成一个随机地址转账
+      const to = web3.Keypair.generate();
+      // 空投
+      // const airdropSignature = await connection.requestAirdrop(
+      //   address,
+      //   LAMPORTS_PER_SOL,
+      // );
+     
+      // await connection.confirmTransaction(airdropSignature);
+
       const payload = {
         instructions: [{
           name: 'multiTransferSOL',
@@ -91,8 +124,18 @@ export default function () {
       return hash;
     },
 
-    async buildChangeMode() {
-      
+    async buildChangeMode(address) {
+      const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+      const payload = {
+        instructions: [{
+          name: 'removeOwners',
+        }],
+        address,
+      }
+      const transaction = this.buildInstructions(payload);
+      const hash = await sendAndConfirmTransaction(connection, transaction, []);
+
+      return hash;
     }
   } 
 }

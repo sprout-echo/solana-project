@@ -9,6 +9,9 @@ export function generateMnemonic() {
 
 export function generateKeyAndAddress(mnemonic) {
   const seed = bip39.mnemonicToSeedSync(mnemonic, "");
+  // 恢复 bip39 格式
+  // const keypair = Keypair.fromSeed(seed.slice(0, 32));
+  // 恢复 bip44 格式
   const hd = HDKey.fromMasterSeed(seed.toString("hex"));
   const derivePath = "m/44'/501'/0'/0'";
   const keypair = Keypair.fromSeed(hd.derive(derivePath).privateKey);
