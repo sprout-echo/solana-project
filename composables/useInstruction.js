@@ -5,16 +5,29 @@ import {
   Transaction, 
   Connection, 
   clusterApiUrl, 
-  sendAndConfirmTransaction, 
+  sendAndConfirmTransaction,
+  sendAndConfirmRawTransaction,
   TransactionInstruction, 
-  SystemProgram, 
+  SystemProgram,
+  LAMPORTS_PER_SOL,
   SYSVAR_INSTRUCTIONS_PUBKEY } from '@solana/web3.js';
 import bs58 from "bs58";
 import bitcore from 'bitcore-lib-cash';
+import nacl from 'tweetnacl';
 const BufferWriter = bitcore.encoding.BufferWriter;
 
 export default function () {
   return {
+    // 空投
+    async airdropToken(address) {
+      const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+      const airdropSignature = await connection.requestAirdrop(
+        new PublicKey(address),
+        LAMPORTS_PER_SOL,
+      );
+     
+      await connection.confirmTransaction(airdropSignature);
+    },
     async buildCreateMultiWallet(programId, newAccount) {
       const newAccountPublicKey = new PublicKey(newAccount);
       const programIDPubkey = new PublicKey(programId);
@@ -77,22 +90,27 @@ export default function () {
 
     async sendTransaction(payload, privateKey) {
       const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
-      // 创建从密钥的unit8array派生的新密钥对
-      const from = Keypair.fromSecretKey(new Uint8Array(bs58.decode(privateKey)));
+      const fromPubKey = new PublicKey(payload.from);
+
       const { blockhash } = await connection.getLatestBlockhash("finalized");
       const transaction = this.buildInstructions(payload);
 
-      transaction.feePayer = payload.from;
+      transaction.feePayer = fromPubKey;
       // 提交之前，每个交易需要引用一个recent blockhash（最新块哈希）。 块哈希被用于去重，以及移除过期交易
       transaction.recentBlockhash = blockhash;
+
+      let transactionBuffer = transaction.serializeMessage();
+      let signature = nacl.sign.detached(transactionBuffer, bs58.decode(privateKey));
+  
+      transaction.addSignature(fromPubKey, signature);
+      const rawTransaction = transaction.serialize();
       // Sign transaction, broadcast, and confirm
-      const txHash = await sendAndConfirmTransaction(
+      const result = await sendAndConfirmRawTransaction(
         connection,
-        transaction,
-        [from],
+        rawTransaction,
       );
 
-      return txHash;
+      return result;
     },
 
     // 多签转账
@@ -101,13 +119,6 @@ export default function () {
       const from = Keypair.fromSecretKey(new Uint8Array(bs58.decode(privateKey)));
       // 生成一个随机地址转账
       const to = web3.Keypair.generate();
-      // 空投
-      // const airdropSignature = await connection.requestAirdrop(
-      //   address,
-      //   LAMPORTS_PER_SOL,
-      // );
-     
-      // await connection.confirmTransaction(airdropSignature);
 
       const payload = {
         instructions: [{

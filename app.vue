@@ -4,6 +4,7 @@
     <el-button type="primary" @click="generateM()">随机生成助记词</el-button>
     <div style="color:#5E6773; padding: 12px;">{{ obj.mnemonic }}</div>
     <el-button type="primary" style="margin-top: 12px;" @click="generateKeyAddress()">生成公私钥</el-button>
+    <div style="margin-top:10px;"><el-button type="primary" @click="airdrop">空投</el-button></div>
     <div style="margin-top:10px;"><el-button type="primary" @click="onCreate">创建钱包</el-button></div>
     <div style="margin-top:10px;"><el-button type="primary" @click="onSearch">查询钱包信息</el-button></div>
     <div style="margin-top:10px;">
@@ -19,8 +20,8 @@ import { generateMnemonic, generateKeyAndAddress, getMultiAccountInfo } from "~/
 const nuxtApp = useNuxtApp();
 const obj = reactive({
   mnemonic: '',
-  privateKey: '',
-  address: '7JXKVj3MBNSwL39wPxNiRr1jGnsS8ARtu8fotazFRLeP', // 即钱包地址
+  privateKey: '3zvNHfEsiCC6tnM4ckDWW2UxPzcr8QsHGS6zTRzF1rpptDtwhDtnM1a7Txen2xL7Zcaq4n2MbvA24ukVwTpqq7Gs',
+  address: '53MHh2B21cYWovDAHZayPK8awXGc8pdzRXx3hZaY668o', // 即钱包地址 7JXKVj3MBNSwL39wPxNiRr1jGnsS8ARtu8fotazFRLeP
 })
 
 const generateM = () => {
@@ -33,6 +34,10 @@ const generateKeyAddress = () => {
   obj.privateKey = res.secretKey;
   console.log('address:', res.address);
   console.log('secretKey:', res.secretKey);
+}
+
+const airdrop = () => {
+  useInstruction().airdropToken(obj.address);
 }
 
 const onCreate = async() => {

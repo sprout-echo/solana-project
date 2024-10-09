@@ -22,6 +22,15 @@ export function generateKeyAndAddress(mnemonic) {
   }
 }
 
+/**
+ * 
+ * @param {*} address 
+ * @returns 
+ * lamports: 余额
+ * owner: 所有者
+ * executable: 是否可执行
+ * rentEpoch: 此帐户下次欠租金的时期
+ */
 export async function getMultiAccountInfo(address) {
   const addressPublicKey = new PublicKey(address);
   const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
