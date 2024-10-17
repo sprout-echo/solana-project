@@ -41,19 +41,21 @@ const airdrop = () => {
 }
 
 const onCreate = async() => {
-  const contract = 'H7yqXZaYmAFKv9GinkNT9ZKwkELDicGXEig2wPaTGJ33';  // 工厂合约地址，在sol公链上，此地址就是ProgramID
-  // 创建多签钱包参数
-  const payload = await useInstruction().buildCreateMultiWallet(contract, obj.address);
+  const payer = '7JXKVj3MBNSwL39wPxNiRr1jGnsS8ARtu8fotazFRLeP';
+  await useInstruction().createMultsigAccount(payer, obj.address, obj.privateKey);
+  // const contract = 'H7yqXZaYmAFKv9GinkNT9ZKwkELDicGXEig2wPaTGJ33';  // 工厂合约地址，在sol公链上，此地址就是ProgramID
+  // // 创建多签钱包参数
+  // const payload = await useInstruction().buildCreateMultiWallet(contract, obj.address);
   
-  const params = {
-    instructions: payload,
-    fee: '0',
-    unitPrice: "200",    // gas费用
-    unitLimit: 200000,
-    from: obj.address,
-  };
-  const result = await useInstruction().sendTransaction(params, obj.privateKey);
-  console.log('result:', result);
+  // const params = {
+  //   instructions: payload,
+  //   fee: '0',
+  //   unitPrice: "200",    // gas费用
+  //   unitLimit: 200000,
+  //   from: obj.address,
+  // };
+  // const result = await useInstruction().sendTransaction(params, obj.privateKey);
+  // console.log('result:', result);
 } 
 
 const onSearch = async () => {
@@ -64,7 +66,10 @@ const onSearch = async () => {
 
 const onMultSignTransfer = async() => {
   // 构建合约对应的签名消息
-  const data = await useInstruction().buildBatchTransfer(obj.address, obj.privateKey);
+  const source = '7JXKVj3MBNSwL39wPxNiRr1jGnsS8ARtu8fotazFRLeP';
+  const dest = '53MHh2B21cYWovDAHZayPK8awXGc8pdzRXx3hZaY668o';
+  const amount = 1; // 1 SOL = 10^9 lamports
+  const data = await useInstruction().buildBatchTransfer(source, dest, obj.address, amount, obj.privateKey);
   console.log('transfer data:', data);
 }
 
